@@ -4,8 +4,11 @@
 ggeditGadget <- function(viewer=shiny::paneViewer(minHeight = 1000),...) {
   TEMPLIST<-new.env()
   TEMPLIST$obj<-get(".p", envir = .ggeditEnv)
-  minHeight <- get(".minHeight", envir = .ggeditEnv)  
+
   verbose<- get(".verbose", envir = .ggeditEnv)  
+  showDefaults<- get(".showDefaults", envir = .ggeditEnv)  
+  plotWidth<- get(".plotWidth", envir = .ggeditEnv)  
+  plotHeight<- get(".plotHeight", envir = .ggeditEnv)  
   
     ui <-miniUI::miniPage( 
       miniUI::gadgetTitleBar("Edit ggplots themes and layer aesthetics"),
@@ -35,7 +38,7 @@ ggeditGadget <- function(viewer=shiny::paneViewer(minHeight = 1000),...) {
         TEMPLIST$nonLayers<-vector('list',length(TEMPLIST$objList.new))
         TEMPLIST$nonLayersTxt<-vector('list',length(TEMPLIST$objList.new))
         
-        baseLayerVerbose=lapply(TEMPLIST$obj,function(x) lapply(x$layers,function(y) cloneLayer(y,verbose = T)))
+        baseLayerVerbose=lapply(TEMPLIST$obj,function(x) lapply(x$layers,function(y) cloneLayer(y,verbose = T,showDefaults = showDefaults)))
         
         plotIdx=shiny::reactive({
           if(is.null(input$activePlot)){
@@ -67,23 +70,23 @@ ggeditGadget <- function(viewer=shiny::paneViewer(minHeight = 1000),...) {
             if(numElem[item]==1) {
               newLayer=cloneLayer(TEMPLIST$obj.new$layers[[layer.idx]])
               newLayer$aes_params[[item]]=eval(parse(text=paste0('input$pop',toupper(item))))
-              TEMPLIST$obj.new$layers[[layer.idx]]<<-newLayer
+              TEMPLIST$obj.new$layers[[layer.idx]]<-newLayer
             }else{
               if(TEMPLIST$obj.Elems[[layer.idx]][[item]][['class']][[1]]=='numeric'){
                 if(input[[paste0('pop',toupper(item),'fixedPal')]]!='Manual'){
                   palItem=paste0("'",input[[paste0('pop',toupper(item),'fixedPal')]],"'")
                   palTxt=paste0("scale_",item,"_gradientn(colours=scales::brewer_pal(palette=",palItem,",direction=-1)(9)[1:5])")
-                  TEMPLIST$nonLayersTxt[[as.numeric(input$activePlot)]][[paste0("scale_",item,"_gradientn")]]<<-palTxt
+                  TEMPLIST$nonLayersTxt[[as.numeric(input$activePlot)]][[paste0("scale_",item,"_gradientn")]]<-palTxt
                   suppressMessages({nL=eval(parse(text=palTxt))})
-                  TEMPLIST$nonLayers[[as.numeric(input$activePlot)]][[paste0("scale_",item,"_gradientn")]]<<-nL
+                  TEMPLIST$nonLayers[[as.numeric(input$activePlot)]][[paste0("scale_",item,"_gradientn")]]<-nL
                   suppressMessages({eval(parse(text=paste0("TEMPLIST$obj.new<-TEMPLIST$obj.new+",palTxt)))})
                 }else{
                   LowCol=paste0("'",input[[paste0('pop',input$pop,toupper(item),'Low')]],"'")
                   HighCol=paste0("'",input[[paste0('pop',input$pop,toupper(item),'High')]],"'")
                   ColTxt=paste0("scale_",item,"_gradient(low=",LowCol,",high=",HighCol,")")                  
-                  TEMPLIST$nonLayersTxt[[as.numeric(input$activePlot)]][[paste0("scale_",item,"_gradient")]]<<-ColTxt
+                  TEMPLIST$nonLayersTxt[[as.numeric(input$activePlot)]][[paste0("scale_",item,"_gradient")]]<-ColTxt
                   suppressMessages({nL=eval(parse(text=ColTxt))})
-                  TEMPLIST$nonLayers[[as.numeric(input$activePlot)]][[paste0("scale_",item,"_gradient")]]<<-nL
+                  TEMPLIST$nonLayers[[as.numeric(input$activePlot)]][[paste0("scale_",item,"_gradient")]]<-nL
                   suppressMessages({eval(parse(text=paste0("TEMPLIST$obj.new<-TEMPLIST$obj.new+",ColTxt)))})
                   }
               }else{
@@ -94,14 +97,14 @@ ggeditGadget <- function(viewer=shiny::paneViewer(minHeight = 1000),...) {
                 }
 
                 vals=paste0(vals,collapse=',')
-                TEMPLIST$nonLayersTxt[[as.numeric(input$activePlot)]][[paste0("scale_",item,"_manual")]]<<-paste0("scale_",item,"_manual(values=c(",vals,"))")
+                TEMPLIST$nonLayersTxt[[as.numeric(input$activePlot)]][[paste0("scale_",item,"_manual")]]<-paste0("scale_",item,"_manual(values=c(",vals,"))")
                 suppressMessages({nL=eval(parse(text=paste0("scale_",item,"_manual(values=c(",vals,"))")))})
-                TEMPLIST$nonLayers[[as.numeric(input$activePlot)]][[paste0("scale_",item,"_manual")]]<<-nL
+                TEMPLIST$nonLayers[[as.numeric(input$activePlot)]][[paste0("scale_",item,"_manual")]]<-nL
                 suppressMessages(eval(parse(text=paste0("TEMPLIST$obj.new<-TEMPLIST$obj.new+scale_",item,"_manual(values=c(",vals,"))"))))
               }
             }
           }
-          TEMPLIST$objList.new[[as.numeric(input$activePlot)]]<<-TEMPLIST$obj.new
+          TEMPLIST$objList.new[[as.numeric(input$activePlot)]]<-TEMPLIST$obj.new
           return(TEMPLIST$objList.new)
         })
 
@@ -162,7 +165,7 @@ ggeditGadget <- function(viewer=shiny::paneViewer(minHeight = 1000),...) {
           strThemeCall=paste0("TEMPLIST$obj.new<-TEMPLIST$obj.new+theme(",paste0(unlist(strThemeCallList),collapse = ","),")")
           
           eval(parse(text=strThemeCall))
-          TEMPLIST$objList.new[[as.numeric(input$activePlot)]]<<-TEMPLIST$obj.new
+          TEMPLIST$objList.new[[as.numeric(input$activePlot)]]<-TEMPLIST$obj.new
 
           TEMPLIST$themeUpdate<-lapply(TEMPLIST$objList.new,function(p) p$theme)
           return(TEMPLIST$objList.new)
@@ -177,7 +180,10 @@ ggeditGadget <- function(viewer=shiny::paneViewer(minHeight = 1000),...) {
           TEMPLIST$p.now<-TEMPLIST$objList.new[[as.numeric(input$activePlot)]]
           if(length(TEMPLIST$p.now$theme)>0) theme.now=theme.now+TEMPLIST$p.now$theme
 
-          for(i in 1:length(TEMPLIST$objList.new)) TEMPLIST$objList.new[[i]]<<- TEMPLIST$objList.new[[i]]+theme.now
+          for(i in 1:length(TEMPLIST$objList.new)){
+            TEMPLIST$objList.new[[i]]<- TEMPLIST$objList.new[[i]]+theme.now
+            TEMPLIST$themeUpdate[[i]]<- TEMPLIST$objList.new[[i]]$theme
+          }
 
           return(TEMPLIST$objList.new)
         })
@@ -206,7 +212,7 @@ ggeditGadget <- function(viewer=shiny::paneViewer(minHeight = 1000),...) {
 #Render Plot----
         output$Plot=shiny::renderPlot({
           plot(as.ggedit(TEMPLIST$objList.new))
-        },height=minHeight*.6)
+        },width=plotWidth,height=plotHeight)
 
         shiny::observeEvent(input$updateElem,{
           output$Plot=shiny::renderPlot({
@@ -216,7 +222,7 @@ ggeditGadget <- function(viewer=shiny::paneViewer(minHeight = 1000),...) {
               pList.out=update.Layer()
               plot(as.ggedit(pList.out))
             }
-          },height=minHeight*.6)
+          },width=plotWidth,height=plotHeight)
         })
 
         shiny::observeEvent(input$updateTheme,{
@@ -227,12 +233,12 @@ ggeditGadget <- function(viewer=shiny::paneViewer(minHeight = 1000),...) {
               pList.out=update.Theme()
               plot(as.ggedit(pList.out))
             }
-          },height=minHeight*.6)
+          },width=plotWidth,height=plotHeight)
         })
 
         shiny::observeEvent(input$SetThemeGrid,{
           pList.out=update.ThemeGrid()
-          output$Plot=shiny::renderPlot({plot(as.ggedit(pList.out))},height=minHeight*.6)
+          output$Plot=shiny::renderPlot({plot(as.ggedit(pList.out))},width=plotWidth,height=plotHeight)
         })
 
         shiny::observeEvent(input$done, {
@@ -244,9 +250,9 @@ ggeditGadget <- function(viewer=shiny::paneViewer(minHeight = 1000),...) {
                          UpdatedLayersElements=layersList(TEMPLIST$objList.new)
                          )
 
-          if(verbose) ggeditOut$UpdatedLayerCalls=lapply(TEMPLIST$objList.new,function(p) lapply(p$layer,function(item) cloneLayer(l = item,verbose = T)))
+          if(verbose) ggeditOut$UpdatedLayerCalls=lapply(TEMPLIST$objList.new,function(p) lapply(p$layer,function(item) cloneLayer(l = item,verbose = T,showDefaults = showDefaults)))
                     
-          names(TEMPLIST$nonLayers)<<-names(TEMPLIST$nonLayersTxt)<<-names(TEMPLIST$objList.new)
+          names(TEMPLIST$nonLayers)<-names(TEMPLIST$nonLayersTxt)<-names(TEMPLIST$objList.new)
           ggeditOut$updatedScales=TEMPLIST$nonLayers
 
           if(verbose) ggeditOut$UpdatedScalesCalls=TEMPLIST$nonLayersTxt            
@@ -255,15 +261,24 @@ ggeditGadget <- function(viewer=shiny::paneViewer(minHeight = 1000),...) {
           if(exists('themeUpdate',envir = TEMPLIST)) {
             ggeditOut$UpdatedThemes=TEMPLIST$themeUpdate
             if(verbose){
-              ggeditOut$UpdatedThemeCalls=lapply(TEMPLIST$objList.new,function(p,input){
+              ggeditOut$UpdatedThemeCalls=lapply(names(TEMPLIST$objList.new),function(lp,input){
+                p=TEMPLIST$objList.new[[lp]]
                 if(length(p$theme)>0){
-                x.theme=themeFetch(p$theme)
-                x=lapply(names(x.theme),function(item){themeNewVal(x.theme[item],p,input)})
-                paste0("theme(",paste0(unlist(x),collapse = ","),")")
+                  if(!showDefaults){
+                    themeBase=ggplot2::theme_get()
+                    if(length(TEMPLIST$obj[[lp]]$theme)>0) themeBase=themeBase+TEMPLIST$obj[[lp]]$theme
+                    compare(p$theme,themeBase,verbose=T)
+                  }else{
+                    x.theme=themeFetch(p$theme)
+                    x=lapply(names(x.theme),function(item){themeNewVal(x.theme[item],p,input)})
+                    paste0("theme(",paste0(unlist(x),collapse = ","),")")
+                  }
+
                 }else{
                 c('list()')
                 }
               },input)
+              names(ggeditOut$UpdatedThemeCalls)=names(TEMPLIST$objList.new)
             } 
             }
           
@@ -279,7 +294,7 @@ ggeditGadget <- function(viewer=shiny::paneViewer(minHeight = 1000),...) {
         })
         
         simTxt=shiny::reactive({
-          LayerVerbose<-lapply(TEMPLIST$objList.new,function(p) lapply(p$layer,function(item) cloneLayer(l = item,verbose = T)))
+          LayerVerbose<-lapply(TEMPLIST$objList.new,function(p) lapply(p$layer,function(item) cloneLayer(l = item,verbose = T,showDefaults = showDefaults)))
           if(is.null(input$activePlot)){
             aP=1
           }else{

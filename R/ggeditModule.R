@@ -5,12 +5,16 @@
 #' @param output shinyapp output argument
 #' @param session shinyapp session argument
 #' @param obj ggplot as reactive shiny object
+#' @param verbose logical to control if the output includes script for layers and themes calls for parsing to create objects (default, verbose=F)
+#' @param showDefaults toggle to control if the verbose output shows all the input arguments passed to the proto object (if verbose==FALSE then ignored)
+#' @param width,height Must be a valid CSS unit (like \code{'100\%'},
+#'   \code{'400px'}, \code{'auto'}) or a number, which will be coerced to a
+#'   string and have \code{'px'} appended.
 #' @export
 #' @keywords internal
 #' @import shiny
 #' @import shinyBS
-ggEdit<- function(input, output, session,obj) {
-  verbose=T
+ggEdit<- function(input, output, session,obj,verbose=TRUE,showDefaults=FALSE,width='auto',height='auto') {
   TEMPLIST<-new.env()
 
   shiny::observe({
@@ -44,7 +48,7 @@ ggEdit<- function(input, output, session,obj) {
     
     if(is.null(names(p.in))) names(p.in)=as.character(1:length(p.in))
     
-    lapply(p.in,function(x) lapply(x$layers,function(y) cloneLayer(y,verbose = T)))
+    lapply(p.in,function(x) lapply(x$layers,function(y) cloneLayer(y,verbose = T,showDefaults = showDefaults)))
   })
   
   plotIdx=shiny::eventReactive(input$activePlot,{
@@ -200,8 +204,11 @@ ggEdit<- function(input, output, session,obj) {
   update.ThemeGrid=shiny::eventReactive(input$SetThemeGrid,{
     p.now<-TEMPLIST$objList.new[[as.numeric(input$activePlot)]]
     if(length(p.now$theme)>0) theme.now=theme.now+p.now$theme
-    
-    for(i in 1:length(TEMPLIST$objList.new)) TEMPLIST$objList.new[[i]]<- TEMPLIST$objList.new[[i]]+theme.now
+
+    for(i in 1:length(TEMPLIST$objList.new)){
+      TEMPLIST$objList.new[[i]]<- TEMPLIST$objList.new[[i]]+theme.now
+      TEMPLIST$themeUpdate[[i]]<- TEMPLIST$objList.new[[i]]$theme
+    }
     
     return(TEMPLIST$objList.new)
   })
@@ -233,7 +240,7 @@ ggEdit<- function(input, output, session,obj) {
   #Render Plot----
   output$Plot=shiny::renderPlot({
     plot(as.ggedit(TEMPLIST$objList.new))
-  })
+  },width=width,height=height)
   
   shiny::observeEvent(input$updateElem,{
     output$Plot=shiny::renderPlot({
@@ -243,7 +250,7 @@ ggEdit<- function(input, output, session,obj) {
         pList.out=update.Layer()
         plot(as.ggedit(pList.out))
       }
-    })
+    },width=width,height=height)
   })
   
   shiny::observeEvent(input$updateTheme,{
@@ -254,16 +261,16 @@ ggEdit<- function(input, output, session,obj) {
         pList.out=update.Theme()
         plot(as.ggedit(pList.out))
       }
-    })
+    },width=width,height=height)
   })
   
   shiny::observeEvent(input$SetThemeGrid,{
     pList.out=update.ThemeGrid()
-    output$Plot=shiny::renderPlot({plot(as.ggedit(pList.out))})
+    output$Plot=shiny::renderPlot({plot(as.ggedit(pList.out))},width=width,height=height)
   })
   
   simTxt=shiny::reactive({
-    LayerVerbose<-lapply(TEMPLIST$objList.new,function(p) lapply(p$layer,function(item) cloneLayer(l = item,verbose = T)))
+    LayerVerbose<-lapply(TEMPLIST$objList.new,function(p) lapply(p$layer,function(item) cloneLayer(l = item,verbose = T,showDefaults = showDefaults)))
     if(is.null(input$activePlot)){
       aP=1
     }else{
@@ -317,7 +324,7 @@ ggEdit<- function(input, output, session,obj) {
   ggeditOut$UpdatedLayersElements=layersList(TEMPLIST$objList.new)
   
 
-  if(verbose) ggeditOut$UpdatedLayerCalls=lapply(TEMPLIST$objList.new,function(p) lapply(p$layer,function(item) cloneLayer(l = item,verbose = T)))
+  if(verbose) ggeditOut$UpdatedLayerCalls=lapply(TEMPLIST$objList.new,function(p) lapply(p$layer,function(item) cloneLayer(l = item,verbose = T,showDefaults = showDefaults)))
 
   names(TEMPLIST$nonLayers)<-names(TEMPLIST$nonLayersTxt)<-names(TEMPLIST$objList.new)
   ggeditOut$updatedScales=TEMPLIST$nonLayers
@@ -329,15 +336,23 @@ ggEdit<- function(input, output, session,obj) {
     
     ggeditOut$UpdatedThemes=TEMPLIST$themeUpdate
     if(verbose){
-      ggeditOut$UpdatedThemeCalls=lapply(TEMPLIST$objList.new,function(p,input){
+      ggeditOut$UpdatedThemeCalls=lapply(names(TEMPLIST$objList.new),function(lp,input){
+        p=TEMPLIST$objList.new[[lp]]
         if(length(p$theme)>0){
-          x.theme=themeFetch(p$theme)
-          x=lapply(names(x.theme),function(item){themeNewVal(x.theme[item],p,input)})
-          paste0("theme(",paste0(unlist(x),collapse = ","),")")
+          if(!showDefaults){
+            themeBase=ggplot2::theme_get()
+            if(length(TEMPLIST$obj[[lp]]$theme)>0) themeBase=themeBase+TEMPLIST$obj[[lp]]$theme
+            compare(p$theme,themeBase,verbose=T)
+          }else{
+            x.theme=themeFetch(p$theme)
+            x=lapply(names(x.theme),function(item){themeNewVal(x.theme[item],p,input)})
+            paste0("theme(",paste0(unlist(x),collapse = ","),")")
+          }
         }else{
           c('list()')
         }
       },input)
+      names(ggeditOut$UpdatedThemeCalls)=names(TEMPLIST$objList.new)
     }
   }
 

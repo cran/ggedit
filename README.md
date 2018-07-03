@@ -1,7 +1,7 @@
 [![CRAN\_Status\_Badge](https://www.r-pkg.org/badges/version/ggedit)](https://cran.r-project.org/package=ggedit)
 [![Project Status: Active - The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/0.1.0/active.svg)](http://www.repostatus.org/#active) 
-![downloads](http://cranlogs.r-pkg.org/badges/grand-total/ggedit)
-
+![downloads](http://cranlogs.r-pkg.org/badges/ggedit)[![Travis-CI Build Status](https://travis-ci.org/metrumresearchgroup/ggedit.svg?branch=master)](https://travis-ci.org/metrumresearchgroup/ggedit)
+[![Coverage Status](https://img.shields.io/codecov/c/github/metrumresearchgroup/ggedit/master.svg)](https://codecov.io/github/metrumresearchgroup/ggedit?branch=master)[![Covrpage Summary](https://img.shields.io/badge/covrpage-Last_Build_2018_07_02-yellowgreen.svg)](https://github.com/metrumresearchgroup/ggedit/tree/master/tests/README.md)
 # ggedit
 
 ggplot2 has become the standard of plotting in R for many users. New users, however, may find the learning curve steep at first, and more experienced users may find it challenging to keep track of all the options (especially in the theme!). 
@@ -44,55 +44,8 @@ plot(p2) # shows the updated plot (it is available in the first element of p2)
 devtools::install_github("metrumresearchgroup/ggedit")
 ```
 
-#### DEV updates [ggedit_0.2.1](https://github.com/metrumresearchgroup/ggedit/blob/master/Miscellaneous/ggedit_0.2.1.tar.gz)
-
-  - print.ggedit: S3 method to print directly from the output object to the console the script to reproduce  changes on the original plot object
-  
-```r
-    print(obj)
-    
-    point
-    geom_point(mapping=aes(colour=Species),alpha=0.5,size=3)+
-    scale_colour_manual(values=c('#9E4A3F','#008B45','#6495ED'))
-    
-    pointWrap
-    geom_point(mapping=aes(colour=Species),size=6)+
-    theme(panel.background=element_rect(fill='white'))
-    
-    boxplotWrap
-    geom_boxplot()
-    
-    pointLine
-    geom_point(mapping=aes(shape=Species,colour=Petal.Width),size=6)+geom_line(linetype=2)
-```
-
-  - compare: compare two theme objects and return script or new theme object with only the differences between the two
-  
-```r
-    compare(theme_bw(),theme_get())
-    
-    theme(legend.key=element_rect(fill='white'),
-          panel.background=element_rect(fill='white'),
-          panel.grid.major=element_line(colour='grey92'),
-          panel.grid.minor=element_line(colour='grey92'),
-          strip.background=element_rect(colour='grey20')
-          )
-```
-  
-  - call to ggedit is now ggedit(p.in,...), where the following arguments can be passed in to the  ellipses
-    - viewer shiny viewer options. It can be either paneViewer (default with `minHeight=1000`), dialogViewer, browserViewer
-
-    - verbose logical to control if the output includes script for layers and themes calls for parsing to create objects (default, `verbose=TRUE`)
-
-    - showDefaults toggle to control if the verbose output shows all the input arguments passed to the proto object (if `verbose==FALSE` then ignored)
-
-    - width,height dimensions of the renderPlot where the active plot is displayed
-    
-
 ## Limitations
   - layers
     - non colour aesthetics of numeric inputs are not currently supported, e.g.:
       `iris%>%ggplot(aes(x=Sepal.Length,y=Sepal.Width))+geom_point()+geom_text(aes(label=Species,size=Sepal.Length))`
     - geom_text: family is not currently open to change
-  - theme
-    - margin,arrow are not currently available to edit

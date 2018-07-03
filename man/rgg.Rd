@@ -16,21 +16,25 @@ rgg(p, oldGeom, oldGeomIdx = 1, newLayer = NULL)
 \item{newLayer}{ggplot layer or list of layers}
 }
 \description{
-Removes specified layers from a ggplot object and gives 
-the option to replace them with a new layer. This layer can be either 
-a geom object created from regular ggplot functions or an output from 
-the ggedit gadget. 
-In the latter case the layers are found in the updatedLayers object in 
+Removes specified layers from a ggplot object and gives
+the option to replace them with a new layer. This layer can be either
+a geom object created from regular ggplot functions or an output from
+the ggedit gadget.
+In the latter case the layers are found in the updatedLayers object in
 the ggedit output.
 }
 \examples{
-p=ggplot(iris,aes(x =Sepal.Length,y=Sepal.Width))
-p=p+geom_point(aes(colour=Species))+geom_line()
+p <- ggplot2::ggplot(iris,ggplot2::aes(x =Sepal.Length,y=Sepal.Width))
+
+p <- p+ggplot2::geom_point(ggplot2::aes(colour=Species))+ggplot2::geom_line()
+
 p
+
 p\%>\%rgg('point',1)
-\donttest{
-x=ggedit(p)
-pnew=p\%>\%rgg('point',1,x$updatedLayers[[1]])
+
+if( interactive() ){
+x <- ggedit(p)
+pnew <- p\%>\%rgg('point',1,x$updatedLayers[[1]])
 pnew
 }
 }

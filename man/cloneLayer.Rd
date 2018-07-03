@@ -17,25 +17,35 @@ cloneLayer(l, verbose = FALSE, showDefaults = TRUE)
 ggproto or string object (conditional on verbose)
 }
 \description{
-Creates copies of ggplot layers from within ggplot objects that 
+Creates copies of ggplot layers from within ggplot objects that
 are independent of the parent object.
 }
 \details{
-ggplot objects are comprimsed of layer objects. Once compiled they 
-are part of the plot object environment and if they are changed internally 
-regardless of where they are in the (ie different environment) it will change 
+ggplot objects are comprimsed of layer objects. Once compiled they
+are part of the plot object environment and if they are changed internally
+regardless of where they are in the (ie different environment) it will change
 the original plot. This function allows to create replicates of the plot layers
-and edit them independent of the original plot. When setting verbose to TRUE 
+and edit them independent of the original plot. When setting verbose to TRUE
 function returns the ggplot2 call as a string to paste in regular ggplot script
 to generate the layer.
 }
 \examples{
-p=ggplot(iris,aes(x =Sepal.Length,y=Sepal.Width))
-p=p+geom_point(aes(colour=Species))+geom_line()
+p <- ggplot2::ggplot(iris,ggplot2::aes(x =Sepal.Length,y=Sepal.Width))
+
+p <- p + 
+ggplot2::geom_point(ggplot2::aes(colour='Species')) + 
+ggplot2::geom_line()
+
 p$layers[[1]]
-newLayer=cloneLayer(l=p$layers[[1]])
+
+newLayer <- cloneLayer(l=p$layers[[1]])
+
 all.equal(p$layers[[1]],newLayer)
-(v=cloneLayer(l=p$layers[[1]],verbose=TRUE))
+
+(v <- cloneLayer(l=p$layers[[1]],verbose=TRUE))
+
 eval(parse(text=v))
+
 all.equal(p$layers[[1]],eval(parse(text=v)))
+
 }

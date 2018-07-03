@@ -10,12 +10,9 @@
 #'
 #' @keywords datasets
 #'
-#' @details 
+#' @details
 #' list includes a geom_point, geom_point+facet_wrap, geom_boxplot+facet_wrap,
 #' geom_point+geom_line, geom_point+geom_smooth, geom_point+geom_line+facet_wrap,
 #' geom_point+geom_line+facet_grid
 #'
-#' @examples
-#' data(pList)
-#' pList
-NULL
+"pList"

@@ -2,15 +2,34 @@
 % Please edit documentation in R/print.ggedit.R
 \name{print.ggedit}
 \alias{print.ggedit}
-\title{Print verbose outputs of objects of class ggedit}
+\title{Print ggedit objects}
 \usage{
-\method{print}{ggedit}(x, ...)
+\method{print}{ggedit}(x, layout = NULL, byrow = FALSE, ...)
 }
 \arguments{
-\item{x}{ggedit object}
+\item{x}{list of ggplot2 plot objects}
 
-\item{...}{nothing}
+\item{layout}{matrix, layout of plots like in \code{\link[graphics]{layout}}, 
+if NULL then a default layout is used, Default: NULL}
+
+\item{byrow}{boolean, argument passed to default layout (when layout is NULL), used to 
+transpose the output.}
+
+\item{...}{not used}
 }
 \description{
-function to tidy the ggedit output to single script calls for each plot
+Plots lists of ggplot2 plot objects
+layout functionality.
+}
+\examples{
+p <- as.gglist(pList[1:2])
+p
+
+p1 <- p+geom_hline(aes(yintercept=3))
+p1
+
+print(p1,byrow=TRUE)
+
+print(p1,layout = matrix(c(2,2,NA,1),ncol=2))
+
 }
